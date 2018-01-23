@@ -3,8 +3,10 @@ const mailcomposer = require('mailcomposer');
 module.exports.register = (server, options, next) => {
   const mailgun = require('mailgun-js')(options);
 
-  server.expose('sendTextEmail', (from, to, subject, text) => {
+  server.expose('sendTextEmail', (from, to, subject, text, headers) => {
     const data = { from, to, subject, text };
+    if (headers && headers.replyTo)
+      data['h:Reply-To'] = headers.replyTo;
 
     mailgun.messages().send(data, (sendError) => {
       if (sendError) {
@@ -14,7 +16,7 @@ module.exports.register = (server, options, next) => {
     });
   });
 
-  server.expose('sendHTMLEmail', (from, to, subject, text, html) => {
+  server.expose('sendHTMLEmail', (from, to, subject, text, html, headers) => {
     const mail = mailcomposer({ from, to, subject, body: text, html });
 
     mail.build((mailBuildError, message) => {
@@ -23,6 +25,10 @@ module.exports.register = (server, options, next) => {
         message: message.toString('ascii'),
       };
 
+      if (headers && headers.replyTo)
+        dataToSend['h:Reply-To'] = headers.replyTo;
+
+      console.log('Data to send is', dataToSend);
       mailgun.messages().sendMime(dataToSend, (sendError) => {
         if (sendError) {
           server.log('mailgun', sendError);
