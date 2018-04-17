@@ -16,7 +16,7 @@ module.exports.register = (server, options, next) => {
     });
   });
 
-  server.expose('sendHTMLEmail', (from, to, subject, text, html, headers) => {
+  server.expose('sendHTMLEmail', (from, to, subject, text, html, headers, next) => {
     const mail = mailcomposer({ from, to, subject, body: text, html });
 
     mail.build((mailBuildError, message) => {
@@ -28,12 +28,13 @@ module.exports.register = (server, options, next) => {
       if (headers && headers.replyTo)
         dataToSend['h:Reply-To'] = headers.replyTo;
 
-      console.log('Data to send is', dataToSend);
       mailgun.messages().sendMime(dataToSend, (sendError) => {
         if (sendError) {
           server.log('mailgun', sendError);
-          return;
+          return next(sendError);
         }
+        else
+          return next();
       });
     });
   });
