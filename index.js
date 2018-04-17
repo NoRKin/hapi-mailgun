@@ -28,14 +28,7 @@ module.exports.register = (server, options, next) => {
       if (headers && headers.replyTo)
         dataToSend['h:Reply-To'] = headers.replyTo;
 
-      mailgun.messages().sendMime(dataToSend, (sendError) => {
-        if (sendError) {
-          server.log('mailgun', sendError);
-          return next(sendError);
-        }
-        else
-          return next();
-      });
+      return mailgun.messages().sendMime(dataToSend, next);
     });
   });
 
